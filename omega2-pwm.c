@@ -20,7 +20,7 @@
 
 #define printerr(fmt,...) do { fprintf(stderr, fmt, ## __VA_ARGS__); fflush(stderr); } while(0)
 
-//#define DEBUG (1)
+#define DEBUG (1)
 
 #ifdef DEBUG
 # define DEBUG_PRINT(x) printf x
@@ -164,7 +164,7 @@ static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
     devmem(PWM0_CON + reg_offset, 4, 1, 0x0400 | (fast?8:0) | divider); //old pwm mode
     devmem(PWM0_HDURATION + reg_offset, 4, 1, duration0);
     devmem(PWM0_LDURATION + reg_offset, 4, 1, duration1);
-    devmem(PWM0_GDURATION + reg_offset, 4, 1, 0); // Not sure what it does anyways, so we're setting it to zero.
+    devmem(PWM0_GDURATION + reg_offset, 4, 1, duration); // Not sure what it does anyways, so we're setting it to zero.
     devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0xAAAAAAAA);
     devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0xAAAAAAAA);
     devmem(PWM0_WAVE_NUM + reg_offset, 4, 1, 0);

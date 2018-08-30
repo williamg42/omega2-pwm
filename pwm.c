@@ -20,6 +20,15 @@
 
 #define printerr(fmt,...) do { fprintf(stderr, fmt, ## __VA_ARGS__); fflush(stderr); } while(0)
 
+//#define DEBUG (1)
+
+#ifdef DEBUG
+# define DEBUG_PRINT(x) printf x
+#else
+# define DEBUG_PRINT(x) do {} while (0)
+#endif
+
+
 #define PWM_ENABLE 0x10005000        // PWM Enable register
 #define PWM0_CON 0x10005010          // PWM0 Control register
 #define PWM0_HDURATION 0x10005014    // PWM0 High Duration register
@@ -108,6 +117,8 @@ static void usage(const char *cmd)
 
 static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
 {
+    
+    DEBUG_PRINT(("Making pwm call with channel %u, freq %u, duty %u\n", channel, freq, duty ));
     uint32_t enable = devmem(PWM_ENABLE, 4, 0, 0);
 
     enable &= ~((uint32_t)(1<<channel));
@@ -119,17 +130,58 @@ static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
 
     uint32_t reg_offset = 0x40 * channel;
 
-    uint32_t duration = 100000 / freq;
+    uint8_t fast = 1;
+    uint8_t divider = 0b000;
+   
+    //we're going to step through and find a the most accurate divider/clock that we can
+    uint64_t duration = 40000000 /( (1<<divider) * freq);
+    
+    DEBUG_PRINT(("40 MHz divider %d, duration %d\n" , divider, duration));
+    while ((divider < 0b111) && (duration > 15000))
+    {
+      divider += 1;
+      duration = 40000000 /( (1<<divider) * freq);
+      DEBUG_PRINT(("40 MHz divider %d, duration %d\n" , divider, duration));
+    }
+    
+    // if even the /128 divider is too fast on the 40 MHz clock, switch to 100 KHz
+    if (duration > 15000) 
+    {
+        fast = 0;
+        divider = 0;
+        duration = 100000 / freq;
+        DEBUG_PRINT(("100KHz divider %d, duration %d\n" , divider, duration));
+    }
+    
+    
+    // calculate low and high times.
     uint32_t duration0 = duration * duty / 100;
     uint32_t duration1 = duration * (100-duty) / 100;
-
-    devmem(PWM0_CON + reg_offset, 4, 1, 0x7000);
-    devmem(PWM0_HDURATION + reg_offset, 4, 1, duration1 - 1);
-    devmem(PWM0_LDURATION + reg_offset, 4, 1, duration0 - 1);
-    devmem(PWM0_GDURATION + reg_offset, 4, 1, duration / 2);
-    devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0x55555555);
-    devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0x55555555);
+    
+    DEBUG_PRINT(("duration 0 %d\n", duration0));
+    DEBUG_PRINT(("duration 1 %d\n", duration1));
+    DEBUG_PRINT(("control reg %x \n", 0x0400 | (fast?8:0) | divider));
+    devmem(PWM0_CON + reg_offset, 4, 1, 0x0400 | (fast?8:0) | divider); //old pwm mode
+    devmem(PWM0_HDURATION + reg_offset, 4, 1, duration0);
+    devmem(PWM0_LDURATION + reg_offset, 4, 1, duration1);
+    devmem(PWM0_GDURATION + reg_offset, 4, 1, 0); // Not sure what it does anyways, so we're setting it to zero.
+    devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0xAAAAAAAA);
+    devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0xAAAAAAAA);
     devmem(PWM0_WAVE_NUM + reg_offset, 4, 1, 0);
+    
+    //special cases to handle 0 and 100 % duty:
+    if (duty == 0)
+    {
+      DEBUG_PRINT(("special case: off\n"));
+      devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0x00000000);
+      devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0x00000000);
+    }
+    else if (duty == 100)
+    {
+      DEBUG_PRINT(("special case: on\n"));
+      devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0xFFFFFFFF);
+      devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0xFFFFFFFF);
+    }
 
     enable |= 1<<channel;
     devmem(PWM_ENABLE, 4, 1, enable);

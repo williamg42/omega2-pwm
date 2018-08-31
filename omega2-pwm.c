@@ -20,7 +20,7 @@
 
 #define printerr(fmt,...) do { fprintf(stderr, fmt, ## __VA_ARGS__); fflush(stderr); } while(0)
 
-#define DEBUG (1)
+//#define DEBUG (1)
 
 #ifdef DEBUG
 # define DEBUG_PRINT(x) printf x
@@ -161,10 +161,10 @@ static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
     DEBUG_PRINT(("duration 0 %d\n", duration0));
     DEBUG_PRINT(("duration 1 %d\n", duration1));
     DEBUG_PRINT(("control reg %x \n", 0x0400 | (fast?8:0) | divider));
-    devmem(PWM0_CON + reg_offset, 4, 1, 0x0400 | (fast?8:0) | divider); //old pwm mode
-    devmem(PWM0_HDURATION + reg_offset, 4, 1, duration0);
-    devmem(PWM0_LDURATION + reg_offset, 4, 1, duration1);
-    devmem(PWM0_GDURATION + reg_offset, 4, 1, duration); // Not sure what it does anyways, so we're setting it to zero.
+    devmem(PWM0_CON + reg_offset, 4, 1, 0x0200 |0x800 | (fast?8:0) | divider); //new pwm mode, 8-bit position (whatever that means)
+    devmem(PWM0_HDURATION + reg_offset, 4, 4, duration0);
+    devmem(PWM0_LDURATION + reg_offset, 4, 4, duration1);
+    devmem(PWM0_GDURATION + reg_offset, 4, 4, 0); // Not sure what it does anyways, so we're setting it to zero.
     devmem(PWM0_SEND_DATA0 + reg_offset, 4, 1, 0xAAAAAAAA);
     devmem(PWM0_SEND_DATA1 + reg_offset, 4, 1, 0xAAAAAAAA);
     devmem(PWM0_WAVE_NUM + reg_offset, 4, 1, 0);

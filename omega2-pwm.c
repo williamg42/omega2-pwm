@@ -20,7 +20,7 @@
 
 #define printerr(fmt,...) do { fprintf(stderr, fmt, ## __VA_ARGS__); fflush(stderr); } while(0)
 
-//#define DEBUG (1)
+#define DEBUG (1)
 
 #ifdef DEBUG
 # define DEBUG_PRINT(x) printf x

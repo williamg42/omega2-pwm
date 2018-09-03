@@ -136,12 +136,12 @@ static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
     //we're going to step through and find a the most accurate divider/clock that we can
     uint64_t duration = 40000000 /( (1<<divider) * freq);
     
-    DEBUG_PRINT(("40 MHz divider %d, duration %d\n" , divider, duration));
+    DEBUG_PRINT(("40 MHz divider %hhu, duration %llu\n" , divider, duration));
     while ((divider < 0b111) && (duration > 15000))
     {
       divider += 1;
       duration = 40000000 /( (1<<divider) * freq);
-      DEBUG_PRINT(("40 MHz divider %d, duration %d\n" , divider, duration));
+      DEBUG_PRINT(("40 MHz divider %hhu, duration %llu\n" , divider, duration));
     }
     
     // if even the /128 divider is too fast on the 40 MHz clock, switch to 100 KHz
@@ -150,7 +150,7 @@ static void pwm(uint8_t channel, uint32_t freq, uint8_t duty)
         fast = 0;
         divider = 0;
         duration = 100000 / freq;
-        DEBUG_PRINT(("100KHz divider %d, duration %d\n" , divider, duration));
+        DEBUG_PRINT(("100KHz divider %hhu, duration %llu\n" , divider, duration));
     }
     
     
@@ -200,13 +200,13 @@ int main(int argc, char **argv)
     uint32_t freq;
     uint8_t duty = 50;
 
-    if ((sscanf(argv[1], "%d", &channel) != 1) || (channel > 3))
+    if ((sscanf(argv[1], "%hhu", &channel) != 1) || (channel > 3))
     {
         fprintf(stderr, "Invalid channel number\n");
         exit(1);
     }
 
-    if (sscanf(argv[2], "%d", &freq) != 1)
+    if (sscanf(argv[2], "%u", &freq) != 1)
     {
         fprintf(stderr, "Invalid frequency number\n");
         exit(1);
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
 
     if (argc >= 4)
     {
-        if ((sscanf(argv[3], "%d", &duty) != 1) || (duty > 100))
+        if ((sscanf(argv[3], "%hhu", &duty) != 1) || (duty > 100))
         {
             fprintf(stderr, "Invalid duty number\n");
             exit(1);

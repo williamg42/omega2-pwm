@@ -1,6 +1,11 @@
 # Omega2 PWM
 This is simple program to control hardware PWM on Omega2. For some reason Omega2 has not any util to control **hardware** PWM. There is only **fast-gpio** tool, it uses software PWM which is awful for sound generation.
 
+# Update
+**A few days after I got this all cleaned up, the Onion people did this the better way - they made a real kernel module that implements the kernel's SYSFS PWM interface:**
+https://onion.io/2bt-hardware-pwm-omega2/
+
+This makes this tool pretty much useless, but I'll leave it here in case someone wants it.
 
 ## Usage
 
